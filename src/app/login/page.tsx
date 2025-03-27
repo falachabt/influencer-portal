@@ -2,7 +2,7 @@
 // src/app/login/page.tsx
 import React, { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Spin, Alert } from 'antd';
+import { Spin, Alert, Layout } from 'antd';
 import { supabase } from '@/lib/supabase';
 import { Auth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
@@ -11,35 +11,44 @@ import Link from 'next/link';
 export default function LoginPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const redirectTo = searchParams.get('redirectTo') || '/dashboard';
     const errorParam = searchParams.get('error');
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(errorParam);
-    const [userChecked, setUserChecked] = useState(false);
 
     useEffect(() => {
         const checkSession = async () => {
             try {
-                setLoading(true);
+                // Vérifier si l'utilisateur est déjà connecté
                 const { data: { session } } = await supabase.auth.getSession();
 
                 if (session) {
-                    router.push(redirectTo);
+                    // Vérifier si l'utilisateur est un influenceur
+                    const { data: influencerData } = await supabase
+                        .from('influencers')
+                        .select('id')
+                        .eq('email', session.user.email)
+                        .single();
+
+                    if (influencerData) {
+                        // Si c'est un influenceur, rediriger vers le dashboard
+                        router.replace('/dashboard');
+                        return;
+                    }
+
+                    // Si connecté mais pas influenceur, déconnecter
+                    await supabase.auth.signOut();
+                    setError("Votre email n'est pas enregistré comme influenceur de Elearn Prepa.");
                 }
             } catch (error) {
                 console.error('Error checking session:', error);
-                setError("Une erreur est survenue lors de la vérification de votre session.");
             } finally {
                 setLoading(false);
-                setUserChecked(true);
             }
         };
 
-        if (!userChecked) {
-            checkSession();
-        }
-    }, [router, redirectTo, userChecked]);
+        checkSession();
+    }, [router]);
 
     if (loading) {
         return (
@@ -50,19 +59,19 @@ export default function LoginPage() {
     }
 
     return (
-        <div className="min-h-screen flex flex-col bg-gray-50">
-            {/* Navbar fixe */}
-            <nav className="navbar">
+        <Layout className="min-h-screen flex flex-col bg-gray-50">
+            {/* Navbar */}
+            <Layout.Header className="navbar" style={{ backgroundColor: 'white', padding: 0, height: 'auto' }}>
                 <div className="container navbar-container">
                     <Link href="/" className="navbar-brand">
                         <div className="mr-2">EP</div>
                         <div>Elearn Prepa</div>
                     </Link>
                 </div>
-            </nav>
+            </Layout.Header>
 
-            {/* Contenu principal - avec ajustement pour la navbar fixe */}
-            <div className="flex-grow flex items-center justify-center p-4">
+            {/* Contenu principal */}
+            <Layout.Content className="flex-grow flex items-center justify-center p-4">
                 <div className="card" style={{ maxWidth: '28rem', width: '100%' }}>
                     <div style={{ padding: '2rem' }}>
                         <div className="text-center mb-8">
@@ -107,7 +116,7 @@ export default function LoginPage() {
                             }}
                             theme="light"
                             providers={['google']}
-                            redirectTo={`${process.env.NEXT_PUBLIC_SITE_URL}/api/auth/callback?redirectTo=${encodeURIComponent(redirectTo)}`}
+                            redirectTo={`${process.env.NEXT_PUBLIC_SITE_URL}/api/auth/callback`}
                             onlyThirdPartyProviders={true}
                         />
 
@@ -116,14 +125,14 @@ export default function LoginPage() {
                         </div>
                     </div>
                 </div>
-            </div>
+            </Layout.Content>
 
             {/* Footer */}
-            <footer className="footer">
+            <Layout.Footer className="footer">
                 <div className="container">
                     <p>© 2025 Elearn Prepa - Tous droits réservés</p>
                 </div>
-            </footer>
-        </div>
+            </Layout.Footer>
+        </Layout>
     );
 }
