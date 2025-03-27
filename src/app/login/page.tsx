@@ -1,20 +1,28 @@
 'use client';
 // src/app/login/page.tsx
-import React, { useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import React, { useEffect, useState, Suspense } from 'react';
+import { useRouter } from 'next/navigation';
 import { Spin, Alert, Layout } from 'antd';
 import { supabase } from '@/lib/supabase';
 import { Auth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
 import Link from 'next/link';
 
-export default function LoginPage() {
+// Composant qui utilise useSearchParams encapsulé dans Suspense
+function LoginContent() {
+    // Utilisons useState au lieu de useSearchParams pour éviter le problème
+    const [error, setError] = useState<string | null>(null);
     const router = useRouter();
-    const searchParams = useSearchParams();
-    const errorParam = searchParams.get('error');
 
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(errorParam);
+    // Récupérer le paramètre d'erreur de l'URL côté client uniquement
+    useEffect(() => {
+        // Récupérer le paramètre d'erreur à partir de window.location
+        const params = new URLSearchParams(window.location.search);
+        const errorParam = params.get('error');
+        if (errorParam) {
+            setError(errorParam);
+        }
+    }, []);
 
     useEffect(() => {
         const checkSession = async () => {
@@ -42,13 +50,81 @@ export default function LoginPage() {
                 }
             } catch (error) {
                 console.error('Error checking session:', error);
-            } finally {
-                setLoading(false);
+                setError("Une erreur est survenue lors de la vérification de votre session.");
             }
         };
 
         checkSession();
     }, [router]);
+
+    return (
+        <div className="card" style={{ maxWidth: '28rem', width: '100%' }}>
+            <div style={{ padding: '2rem' }}>
+                <div className="text-center mb-8">
+                    <h1 className="text-2xl font-bold text-gray-800">Espace Influenceurs</h1>
+                    <p className="text-gray-600 mt-2">Connectez-vous pour accéder à votre tableau de bord</p>
+                </div>
+
+                {error && (
+                    <Alert
+                        message="Erreur"
+                        description={error}
+                        type="error"
+                        showIcon
+                        className="mb-6"
+                    />
+                )}
+
+                <Auth
+                    supabaseClient={supabase}
+                    appearance={{
+                        theme: ThemeSupa,
+                        variables: {
+                            default: {
+                                colors: {
+                                    brand: '#059669',
+                                    brandAccent: '#047857',
+                                },
+                                borderWidths: {
+                                    buttonBorderWidth: '1px',
+                                    inputBorderWidth: '1px',
+                                },
+                                radii: {
+                                    borderRadiusButton: '6px',
+                                    buttonBorderRadius: '6px',
+                                    inputBorderRadius: '6px',
+                                },
+                            },
+                        },
+                        className: {
+                            button: 'w-full font-medium',
+                        },
+                    }}
+                    theme="light"
+                    providers={['google']}
+                    redirectTo={`${process.env.NEXT_PUBLIC_SITE_URL}/api/auth/callback`}
+                    onlyThirdPartyProviders={true}
+                />
+
+                <div className="mt-8 text-center text-gray-500 text-sm">
+                    <p>Réservé aux partenaires de Elearn Prepa</p>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+export default function LoginPage() {
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        // Un simple délai pour montrer le spinner pendant un court moment
+        const timer = setTimeout(() => {
+            setLoading(false);
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, []);
 
     if (loading) {
         return (
@@ -72,59 +148,9 @@ export default function LoginPage() {
 
             {/* Contenu principal */}
             <Layout.Content className="flex-grow flex items-center justify-center p-4">
-                <div className="card" style={{ maxWidth: '28rem', width: '100%' }}>
-                    <div style={{ padding: '2rem' }}>
-                        <div className="text-center mb-8">
-                            <h1 className="text-2xl font-bold text-gray-800">Espace Influenceurs</h1>
-                            <p className="text-gray-600 mt-2">Connectez-vous pour accéder à votre tableau de bord</p>
-                        </div>
-
-                        {error && (
-                            <Alert
-                                message="Erreur"
-                                description={error}
-                                type="error"
-                                showIcon
-                                className="mb-6"
-                            />
-                        )}
-
-                        <Auth
-                            supabaseClient={supabase}
-                            appearance={{
-                                theme: ThemeSupa,
-                                variables: {
-                                    default: {
-                                        colors: {
-                                            brand: '#059669',
-                                            brandAccent: '#047857',
-                                        },
-                                        borderWidths: {
-                                            buttonBorderWidth: '1px',
-                                            inputBorderWidth: '1px',
-                                        },
-                                        radii: {
-                                            borderRadiusButton: '6px',
-                                            buttonBorderRadius: '6px',
-                                            inputBorderRadius: '6px',
-                                        },
-                                    },
-                                },
-                                className: {
-                                    button: 'w-full font-medium',
-                                },
-                            }}
-                            theme="light"
-                            providers={['google']}
-                            redirectTo={`${process.env.NEXT_PUBLIC_SITE_URL}/api/auth/callback`}
-                            onlyThirdPartyProviders={true}
-                        />
-
-                        <div className="mt-8 text-center text-gray-500 text-sm">
-                            <p>Réservé aux partenaires de Elearn Prepa</p>
-                        </div>
-                    </div>
-                </div>
+                <Suspense fallback={<Spin size="large" />}>
+                    <LoginContent />
+                </Suspense>
             </Layout.Content>
 
             {/* Footer */}
