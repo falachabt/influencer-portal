@@ -12,6 +12,7 @@ import {
     ShoppingOutlined,
     PercentageOutlined
 } from '@ant-design/icons';
+import {useRouter} from "next/navigation";
 
 const { Title, Text } = Typography;
 const { Header, Content, Footer } = Layout;
@@ -51,6 +52,7 @@ export default function Dashboard() {
     const [usageData, setUsageData] = useState<PromoCodeUsage[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [codeCopied, setCodeCopied] = useState<boolean>(false);
+    const router = useRouter();
 
     useEffect(() => {
         const fetchData = async () => {
@@ -214,15 +216,16 @@ export default function Dashboard() {
             <Header className="navbar" style={{ height: 'auto', padding: 0 }}>
                 <div className="container navbar-container">
                     <div className="navbar-brand">
-                        <div className="mr-2">EP</div>
-                        <div>Elearn Prepa</div>
+                        <div>Elearn Prepa </div>
                     </div>
                     <div className="flex items-center">
-                        <span style={{ marginRight: '1rem', color: '#4B5563' }}>Bonjour, {influencer?.name}</span>
                         <Button
                             type="primary"
                             icon={<LogoutOutlined />}
-                            onClick={() => supabase.auth.signOut()}
+                            onClick={() => {
+                                supabase.auth.signOut();
+                                router.push('/login');
+                            }}
                             danger
                         >
                             Déconnexion

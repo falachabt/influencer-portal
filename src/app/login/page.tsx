@@ -12,13 +12,18 @@ export default function LoginPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const redirectTo = searchParams.get('redirectTo') || '/dashboard';
+    const errorParam = searchParams.get('error');
+
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(errorParam);
+    const [userChecked, setUserChecked] = useState(false);
 
     useEffect(() => {
         const checkSession = async () => {
             try {
+                setLoading(true);
                 const { data: { session } } = await supabase.auth.getSession();
+
                 if (session) {
                     router.push(redirectTo);
                 }
@@ -27,11 +32,14 @@ export default function LoginPage() {
                 setError("Une erreur est survenue lors de la vérification de votre session.");
             } finally {
                 setLoading(false);
+                setUserChecked(true);
             }
         };
 
-        checkSession();
-    }, [router, redirectTo]);
+        if (!userChecked) {
+            checkSession();
+        }
+    }, [router, redirectTo, userChecked]);
 
     if (loading) {
         return (
@@ -99,7 +107,7 @@ export default function LoginPage() {
                             }}
                             theme="light"
                             providers={['google']}
-                            redirectTo={`${process.env.NEXT_PUBLIC_SITE_URL}/api/auth/callback`}
+                            redirectTo={`${process.env.NEXT_PUBLIC_SITE_URL}/api/auth/callback?redirectTo=${encodeURIComponent(redirectTo)}`}
                             onlyThirdPartyProviders={true}
                         />
 
