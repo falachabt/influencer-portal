@@ -15,63 +15,75 @@ interface RootLayoutProps {
 }
 
 export default function RootLayout({ children }: RootLayoutProps) {
-    const [loading, setLoading] = useState<boolean>(false);
+    const [loading, setLoading] = useState<boolean>(true);
     const [user, setUser] = useState<User | null>(null);
     const [isInfluencer, setIsInfluencer] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        const checkUser = async () => {
+        // Fonction pour vérifier si l'utilisateur est un influenceur
+        const checkInfluencerStatus = async (userEmail: string) => {
             try {
+                const { data, error } = await supabase
+                    .from('influencers')
+                    .select('id, email')
+                    .eq('email', userEmail)
+                    .single();
+
+                if (data) {
+                    setIsInfluencer(true);
+                } else {
+                    setError("Votre email n'est pas enregistré comme influenceur de Elearn Prepa.");
+                }
+            } catch (err) {
+                console.error('Error checking influencer status:', err);
+                setError('Une erreur est survenue lors de la vérification de votre statut d\'influenceur.');
+            }
+        };
+
+        // Fonction principale pour initialiser l'état d'authentification
+        const initAuthState = async () => {
+            try {
+                setLoading(true);
                 const { data: { session } } = await supabase.auth.getSession();
 
-                if (session) {
+                if (session?.user) {
                     setUser(session.user);
-
-                    // Vérifier si l'email est celui d'un influenceur
                     if (session.user.email) {
-                        const { data, error } = await supabase
-                            .from('influencers')
-                            .select('id, email')
-                            .eq('email', session.user.email)
-                            .single();
-
-                        if (data) {
-                            setIsInfluencer(true);
-                        } else {
-                            setError("Votre email n'est pas enregistré comme influenceur de Elearn Prepa.");
-                        }
+                        await checkInfluencerStatus(session.user.email);
                     }
+                } else {
+                    setUser(null);
+                    setIsInfluencer(false);
+                    setError(null);
                 }
-            } catch (error) {
-                console.error('Error checking user:', error);
+            } catch (err) {
+                console.error('Error initializing auth state:', err);
                 setError('Une erreur est survenue lors de la vérification de votre compte.');
             } finally {
                 setLoading(false);
             }
         };
 
-        checkUser();
+        // Initialiser l'état d'authentification
+        initAuthState();
 
-        // Écouter les changements d'authentification
+        // Configurer l'écouteur d'événements d'authentification
         const { data: authListener } = supabase.auth.onAuthStateChange(
-            async (event, session) => {
-                if (session) {
+            async (_event, session) => {
+                // Ne pas refaire le travail si l'état utilisateur est déjà bon
+                if (
+                    (!session && !user) ||
+                    (session?.user?.id === user?.id)
+                ) {
+                    return;
+                }
+
+                // Mettre à jour l'état utilisateur
+                if (session?.user) {
                     setUser(session.user);
-
-                    // Vérifier si l'email est celui d'un influenceur
                     if (session.user.email) {
-                        const { data, error } = await supabase
-                            .from('influencers')
-                            .select('id, email')
-                            .eq('email', session.user.email)
-                            .single();
-
-                        if (data) {
-                            setIsInfluencer(true);
-                        } else {
-                            setError("Votre email n'est pas enregistré comme influenceur de Elearn Prepa.");
-                        }
+                        await checkInfluencerStatus(session.user.email);
                     }
                 } else {
                     setUser(null);
@@ -81,10 +93,13 @@ export default function RootLayout({ children }: RootLayoutProps) {
             }
         );
 
+        // Nettoyer l'écouteur d'événements
         return () => {
-            authListener?.subscription.unsubscribe();
+            if (authListener?.subscription) {
+                authListener.subscription.unsubscribe();
+            }
         };
-    }, []);
+    }, [user?.id]); // Dépendance sur user.id plutôt que sur le tableau vide
 
     // Indicateur de chargement
     if (loading) {
