@@ -344,9 +344,7 @@ export default function Dashboard() {
                 </div>
             </Content>
 
-            <Footer className="footer">
-                © 2025 Elearn Prepa - Tous droits réservés
-            </Footer>
+
         </Layout>
     );
 }
