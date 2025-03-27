@@ -1,103 +1,146 @@
-import Image from "next/image";
+'use client';
+// src/app/page.tsx
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Spin } from 'antd';
+import { supabase } from '@/lib/supabase';
+import Link from 'next/link';
+import { ArrowRightOutlined } from '@ant-design/icons';
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          router.push('/dashboard');
+        }
+      } catch (error) {
+        console.error('Error checking session:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkSession();
+  }, [router]);
+
+  if (loading) {
+    return (
+        <div className="min-h-screen flex items-center justify-center">
+          <Spin size="large" />
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+    );
+  }
+
+  return (
+      <div className="min-h-screen flex flex-col">
+        {/* Navbar fixe */}
+        <nav className="navbar">
+          <div className="container navbar-container">
+            <Link href="/" className="navbar-brand">
+              <div className="mr-2">EP</div>
+              <div>Elearn Prepa</div>
+            </Link>
+            <Link href="/login">
+              <button className="btn btn-primary">
+                Connexion
+              </button>
+            </Link>
+          </div>
+        </nav>
+
+        {/* Hero Section - avec padding-top ajusté pour compenser la navbar fixe */}
+        <section className="hero">
+          <div className="container">
+            <div className="hero-content">
+              <h1 className="hero-title">
+                Boostez votre influence
+              </h1>
+              <p className="hero-subtitle">
+                Notre plateforme exclusive donne aux influenceurs de Elearn Prepa les outils pour suivre l'impact de leurs codes promo et maximiser leur portée.
+              </p>
+              <Link href="/login">
+                <button className="btn btn-primary btn-lg">
+                  Accéder à mon espace
+                  <ArrowRightOutlined style={{ marginLeft: '0.5rem' }} />
+                </button>
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* Features Section */}
+        <section className="features">
+          <div className="container">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold text-gray-900">
+                Espace Influenceurs
+              </h2>
+              <p className="text-gray-500 mt-2">
+                Réservé aux partenaires de Elearn Prepa
+              </p>
+            </div>
+
+            <div className="features-grid">
+              <div className="feature-card">
+                <div className="feature-icon">
+                  1
+                </div>
+                <h3 className="feature-title">Suivez vos performances</h3>
+                <p className="feature-description">
+                  Visualisez en temps réel l'utilisation de vos codes promo.
+                </p>
+              </div>
+
+              <div className="feature-card">
+                <div className="feature-icon">
+                  2
+                </div>
+                <h3 className="feature-title">Analysez votre impact</h3>
+                <p className="feature-description">
+                  Mesurez le chiffre d'affaires généré par vos recommandations.
+                </p>
+              </div>
+
+              <div className="feature-card">
+                <div className="feature-icon">
+                  3
+                </div>
+                <h3 className="feature-title">Maximisez vos revenus</h3>
+                <p className="feature-description">
+                  Optimisez vos stratégies grâce aux données détaillées.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* CTA Section */}
+        <section className="hero" style={{ paddingTop: '2rem', paddingBottom: '2rem' }}>
+          <div className="container">
+            <div className="text-center">
+              <h3 className="text-2xl font-bold mb-4">
+                Prêt à commencer ?
+              </h3>
+              <Link href="/login">
+                <button className="btn btn-primary btn-lg">
+                  Accéder à mon espace
+                </button>
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* Footer */}
+        <footer className="footer">
+          <div className="container">
+            <p>© 2025 Elearn Prepa - Tous droits réservés</p>
+          </div>
+        </footer>
+      </div>
   );
 }
