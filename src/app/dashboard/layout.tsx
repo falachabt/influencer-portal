@@ -80,25 +80,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
     return (
         <Layout className="dashboard-layout" style={{ minHeight: '100vh' }}>
-            <Layout.Header className="navbar" style={{ height: 'auto', padding: 0 }}>
-                <div className="container navbar-container">
-                    <div className="navbar-brand">
-                        <div className="mr-2">EP</div>
-                        <div>Elearn Prepa</div>
-                    </div>
-                    <div className="flex items-center">
-                        <span style={{ marginRight: '1rem', color: '#4B5563' }}>Bonjour, {userName}</span>
-                        <Button
-                            type="primary"
-                            icon={<LogoutOutlined />}
-                            onClick={handleLogout}
-                            danger
-                        >
-                            Déconnexion
-                        </Button>
-                    </div>
-                </div>
-            </Layout.Header>
+
 
             {children}
 
