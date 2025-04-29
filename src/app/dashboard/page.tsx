@@ -1,7 +1,7 @@
 'use client';
 // src/app/dashboard/page.tsx
 import React, { useState, useEffect } from 'react';
-import { Card, Row, Col, Statistic, Button, Typography, Table, Tag, Spin, Alert, Tooltip, Layout } from 'antd';
+import { Card,  Statistic, Button,  Table, Tag, Spin, Alert, Tooltip, Layout } from 'antd';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Legend } from 'recharts';
 import { supabase } from '@/lib/supabase';
 import {
@@ -15,8 +15,7 @@ import {
 } from '@ant-design/icons';
 import {useRouter} from "next/navigation";
 
-const { Title, Text } = Typography;
-const { Header, Content, Footer } = Layout;
+const { Header, Content } = Layout;
 
 // Types
 interface Payment {
@@ -202,14 +201,14 @@ export default function Dashboard() {
         {
             title: 'Montant initial',
             key: 'originalAmount',
-            render: (_, record: ExtendedPromoCodeUsage) => {
+            render: (_: any, record: ExtendedPromoCodeUsage) => {
                 return formatPrice(record.originalAmount || 0);
             },
         },
         {
             title: 'Réduction',
             key: 'discount',
-            render: (_, record: ExtendedPromoCodeUsage) => {
+            render: (_n : any, record: ExtendedPromoCodeUsage) => {
                 const originalAmount = record.originalAmount || 0;
                 const finalAmount = record.payment?.amount || 0;
                 const discount = originalAmount - finalAmount;
